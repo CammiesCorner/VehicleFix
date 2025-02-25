@@ -10,7 +10,7 @@ import net.minecraft.world.entity.EntityType;
 import java.util.Optional;
 
 public class EntityTags {
-	public static final TagKey<EntityType<?>> AFFECTS = TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("vehiclefix", "affects"));
+	public static final TagKey<EntityType<?>> AFFECTS = TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.fromNamespaceAndPath("vehiclefix", "affects"));
 
 	public static boolean affectsIsEmpty() {
 		Optional<HolderSet.Named<EntityType<?>>> tag = BuiltInRegistries.ENTITY_TYPE.getTag(EntityTags.AFFECTS);
