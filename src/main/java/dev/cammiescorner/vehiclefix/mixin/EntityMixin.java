@@ -42,7 +42,7 @@ public abstract class EntityMixin {
 	private AABB getBoundingBox(Entity instance, Operation<AABB> original) {
 		AABB aabb = original.call(instance);
 
-		if(getVehicle() != null && (EntityTags.affectsIsEmpty() || getVehicle().getType().is(EntityTags.AFFECTS)))
+		if(getVehicle() != null && (!getVehicle().getType().is(EntityTags.NOT_AFFECTED)))
 			return new AABB(aabb.minX, getVehicle().getBoundingBox().minY + 0.1, aabb.minZ, aabb.maxX, aabb.maxY, aabb.maxZ);
 
 		return aabb;
@@ -53,7 +53,7 @@ public abstract class EntityMixin {
 			ordinal = 1
 	), cancellable = true, locals = LocalCapture.CAPTURE_FAILSOFT)
 	public void handleRiderCollisions(Vec3 movement, CallbackInfoReturnable<Vec3> info, AABB box, List<VoxelShape> list, Vec3 vec3d) {
-		if(EntityTags.affectsIsEmpty() || getType().is(EntityTags.AFFECTS)) {
+		if(!getType().is(EntityTags.NOT_AFFECTED)) {
 			for(Entity passenger : getPassengers()) {
 				Vec3 newPos = passenger.position().add(0, passenger.getBbHeight(), 0).add(movement.normalize());
 				BlockState state = level.getBlockState(new BlockPos(new Vec3i((int) newPos.x, (int) newPos.y, (int) newPos.z)));
