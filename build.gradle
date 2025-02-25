@@ -1,72 +1,112 @@
 plugins {
-    id 'fabric-loom' version '0.12.+'
+    id 'fabric-loom' version '1.9-SNAPSHOT'
+    id 'idea'
     id 'maven-publish'
 }
 
-version = project.mod_version
-group = project.maven_group
+def javaVersion = 17
+def ENV = System.getenv()
+def buildTime = ENV.BUILD_TIME ?: new Date().format('yyyyMMddHHmmss')
+boolean isPreviewBuild = !ENV.TAG || ENV.TAG.matches(".+-.+")
+def buildNumber = !ENV.TAG ? ("${ENV.BUILD_NUMBER ? "build.${ENV.BUILD_NUMBER}" : buildTime}") : ""
+
+version = (ENV.TAG ?: "${libs.versions.minecraft.get()}-development") + ((isPreviewBuild && !ENV.TAG) ? "+${buildNumber}" : "")
+group = project.maven_group_id
+archivesBaseName = project.archives_base_name
+
+loom {
+    accessWidenerPath.set(project.file("src/main/resources/vehiclefix.accesswidener"))
+}
 
 repositories {
-    maven { url "https://maven.shedaniel.me" }
-    maven { url "https://maven.terraformersmc.com" }
+
 }
 
 dependencies {
-    minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+    minecraft libs.minecraft
+    mappings loom.officialMojangMappings()
 
-    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-}
-
-loom {
-    accessWidenerPath.set(project.file("src/main/resources/META-INF/vehiclefix.accesswidener"))
+    modImplementation libs.fabric.loader
+    modImplementation libs.fabric.api
 }
 
 processResources {
-    inputs.property "version", project.version
     filteringCharset "UTF-8"
 
-    filesMatching("fabric.mod.json") {
-        expand "version": project.version
+    def expandProps = [
+            "version"              : version,
+            "maven_group_id"       : maven_group_id,
+            "mod_id"               : mod_id,
+            "mod_display_name"     : mod_display_name,
+            "mod_description"      : mod_description,
+            "sources_url"          : sources_url,
+            "issues_url"           : issues_url,
+            "license_url"          : license_url,
+            "discord_url"          : discord_url,
+            "homepage_url"         : homepage_url,
+            "minecraft_version"    : libs.versions.minecraft.get(),
+            "curseforge_id"        : curseforge_id,
+            "modrinth_id"          : modrinth_id,
+
+            "fabric_loader_version": libs.versions.fabric.loader.get(),
+            "java_version"         : javaVersion
+    ]
+
+    filesMatching(['pack.mcmeta', '*.mod.json', 'META-INF/*mods.toml', '*.mixins.json']) {
+        expand expandProps
     }
+    inputs.properties(expandProps)
 }
 
-def targetJavaVersion = 16
 tasks.withType(JavaCompile).configureEach {
-    it.options.encoding = "UTF-8"
-    if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible()) {
-        it.options.release = targetJavaVersion
-    }
+    it.options.release = 17
 }
 
 java {
-    def javaVersion = JavaVersion.toVersion(targetJavaVersion)
-    if (JavaVersion.current() < javaVersion) {
-        toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
-    }
-    archivesBaseName = project.archives_base_name
     withSourcesJar()
+
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
 
 jar {
-    from("LICENSE") {
-        rename { "${it}_${project.archivesBaseName}" }
+    from("LICENSE.md") {
+        rename { "LICENSE_${archivesBaseName}.md" }
     }
+
+    manifest.mainAttributes(
+            "Implementation-Title": project.archivesBaseName,
+            "Implementation-Version": project.version,
+            "Maven-Artifact": "${project.group}:${project.archivesBaseName}:${project.version}".toLowerCase(Locale.ROOT),
+            "Built-On-Minecraft": libs.versions.minecraft.get(),
+            "Built-On-Java": "${System.getProperty("java.vm.version")} (${System.getProperty("java.vm.vendor")})"
+    )
 }
 
 publishing {
     publications {
         mavenJava(MavenPublication) {
-            artifact(remapJar) {
-                builtBy remapJar
-            }
-            artifact(sourcesJar) {
-                builtBy remapSourcesJar
-            }
+            artifactId "VehicleFix"
+            from components.java
         }
     }
 
     repositories {
+        if (ENV.MAVEN_UPLOAD_URL) {
+            maven {
+                url = ENV.MAVEN_UPLOAD_URL
+                credentials {
+                    username = ENV.MAVEN_UPLOAD_USERNAME
+                    password = ENV.MAVEN_UPLOAD_PASSWORD
+                }
+            }
+        }
+    }
+}
+
+idea {
+    module {
+        downloadSources = true
+        downloadJavadoc = true
     }
 }

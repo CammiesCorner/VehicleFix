@@ -1,21 +1,49 @@
 {
 	"schemaVersion": 1,
-	"id": "vehiclefix",
+	"id": "${mod_id}",
 	"version": "${version}",
-	"name": "VehicleFix",
-	"description": "A small mod that makes it so vehicles (boat, horse, minecart, etc) check if their passenger is going to collide with blocks when it moves.",
-	"authors": [ "Cammie" ],
-	"contact": {},
-	"license": "Cammie's Corner Mod License",
-	"icon": "assets/vehiclefix/icon.png",
+	"name": "${mod_display_name}",
+	"description": "${mod_description}",
+	"authors": [
+		"Cammie"
+	],
+	"contact": {
+		"homepage": "${homepage_url}",
+		"sources": "${sources_url}",
+		"issues": "${issues_url}"
+	},
+	"license": "${license_url}",
+	"icon": "icon.png",
 	"environment": "*",
+	"entrypoints": {
+
+	},
+	"custom": {
+		"mc-publish": {
+			"curseforge": "${curseforge_id}",
+			"modrinth": "${modrinth_id}",
+			"loaders": [
+				"fabric",
+				"quilt"
+			],
+			"dependencies": [
+				"fabric-api(required){curseforge:306612}{modrinth:P7dR8mSH}"
+			]
+		},
+		"modmenu": {
+			"links": {
+				"modmenu.discord": "https://cammiescorner.dev/discord"
+			}
+		}
+	},
 	"mixins": [
 		"vehiclefix.mixins.json"
 	],
-	"accessWidener": "META-INF/vehiclefix.accesswidener",
+	"accessWidener": "vehiclefix.accesswidener",
 	"depends": {
-		"fabricloader": ">=0.14.8",
-		"minecraft": ">=1.20",
-		"fabric": "*"
+		"fabricloader": ">=${fabric_loader_version}",
+		"java": ">=${java_version}",
+		"minecraft": "=${minecraft_version}",
+		"fabric-api": "*"
 	}
 }
